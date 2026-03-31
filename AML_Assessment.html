@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanshels AML Compliance — Team Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0F1B33;min-height:100vh}
+input[type=checkbox]{width:18px;height:18px;accent-color:#10B981;cursor:pointer}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F5F6FA}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const ADMIN_PIN="2026",PASS_THRESHOLD=90,STORAGE_KEY="finanshels-aml-assessment-v3";
+const Q=[
+{id:1,cat:"Regulatory Framework",sc:"A new client asks which law governs AML compliance for DNFBPs in the UAE. They were previously compliant under the 2018 law.",q:"Which legislation currently governs AML/CFT compliance for DNFBPs in the UAE?",o:["Federal Decree-Law No. 20 of 2018, still in effect","Federal Decree-Law No. 10 of 2025, effective 14 October 2025","Cabinet Resolution No. 134 of 2025, effective 1 January 2026","Federal Law No. 7 of 2024, effective 14 October 2024"],c:1,ex:"Federal Decree-Law No. 10 of 2025 is the current primary AML/CFT/CPF legislation, effective 14 October 2025. It repealed Federal Decree-Law No. 20 of 2018."},
+{id:2,cat:"Penalties",sc:"A business owner says: \"We're a small real estate brokerage. The fines can't be that serious for a small firm.\"",q:"What is the maximum fine a corporate entity can face for AML non-compliance?",o:["AED 5 million","AED 10 million","AED 50 million","AED 100 million"],c:3,ex:"Corporate entities face fines from AED 5M to AED 100M. No limitation period — liability is indefinite. Courts can order license revocation or dissolution."},
+{id:3,cat:"Penalties",sc:"A compliance officer claims only the company can be penalized, not individual managers or directors.",q:"What is the position on personal liability under the new AML law?",o:["Correct — only the entity is liable","Incorrect — managers face personal criminal liability if they had knowledge of the breach","Incorrect — only the MLRO can be held liable","Correct — personal liability only applies to financial institutions"],c:1,ex:"Managers/directors can be personally liable if they had knowledge or the crime occurred due to breach of duties. Penalties include 1-10 years imprisonment and fines up to AED 10M."},
+{id:4,cat:"Onboarding Process",sc:"You completed the onboarding meeting with a new client. They ask what the next steps are.",q:"What is the correct sequence of the Finanshels 5-step onboarding process?",o:["goAML Registration → Onboarding Meeting → AML Policy → goAML Checklist → Ongoing Compliance","Onboarding Meeting → goAML Checklist → goAML Registration → AML Policy & Setup → Ongoing Compliance","AML Policy & Setup → Onboarding Meeting → goAML Registration → goAML Checklist → Ongoing Compliance","Onboarding Meeting → AML Policy & Setup → goAML Checklist → goAML Registration → Ongoing Compliance"],c:1,ex:"Correct: (1) Onboarding Meeting → (2) goAML Checklist → (3) goAML Registration → (4) AML Policy & Setup → (5) Ongoing Compliance."},
+{id:5,cat:"goAML Registration",sc:"A client submitted all documents for goAML registration. They call after 3 days asking about credentials.",q:"What is the standard TAT for goAML registration?",o:["1-2 business days; escalate immediately","1-2 weeks, subject to Ministry & FIU approval; client should verify email/OTP promptly","1 month; tell the client to wait","24 hours; contact Ministry of Economy to expedite"],c:1,ex:"goAML registration takes 1-2 weeks, subject to Ministry & FIU approval. 3 days is within normal timeframe."},
+{id:6,cat:"goAML Checklist",sc:"A client sent passport copy, Emirates ID, and trade license, saying that should be everything.",q:"Which critical document is missing?",o:["Bank statement","Signed Authorization Letter on company letterhead","Memorandum of Association (MOA)","Tax registration certificate"],c:1,ex:"The checklist requires: Signed Authorization Letter (letterhead), Passport, Visa copy, Emirates ID, and Trade License. The Authorization Letter is the most critical missing item."},
+{id:7,cat:"KYC / CDD",sc:"A real estate client is onboarding a UAE resident customer for a property purchase.",q:"Which documents constitute complete CDD for an individual UAE resident?",o:["Passport copy and Emirates ID only","Completed KYC Form, Passport, Emirates ID, Visa copy, Proof of Address (last 3 months), and contact details","Trade License and MOA","Passport, Emirates ID, and bank statements showing source of funds"],c:1,ex:"CDD for individuals: KYC Form, Passport, Emirates ID, Visa, Proof of Address (utility bill/bank statement, last 3 months), contact details and occupation."},
+{id:8,cat:"EDD",sc:"A customer is identified as a PEP during screening. The client wants to onboard them immediately.",q:"What additional documents/measures are required for this PEP?",o:["No additional docs — just flag in PEP register","Only recent bank statements in addition to CDD","All CDD docs PLUS: bank statements (3-6 months), proof of income, source of funds declaration, source of wealth evidence, and senior management approval","PEPs cannot be onboarded at all"],c:2,ex:"PEPs require EDD: all CDD documents PLUS bank statements, proof of income, source of funds, source of wealth evidence, and senior management approval."},
+{id:9,cat:"KYC Workflow",sc:"A client uploaded passport and Emirates ID to shared Drive. They ask on WhatsApp: \"Can we onboard now?\"",q:"What is the correct workflow before the customer can be onboarded?",o:["Yes, documents are sufficient — proceed","Finanshels screens first, prepares KYC form in risk assessment tool, shares for client signature, and only after clear screening report can the customer be onboarded","Client just waits for screening report then onboards","Client fills their own KYC form and submits to Finanshels"],c:1,ex:"Workflow: (1) Client shares docs → (2) Finanshels screens via Idenfo → (3) Prepare KYC form in risk tool → (4) Share for signature → (5) Only after clear report can customer be onboarded."},
+{id:10,cat:"Risk Assessment",sc:"A non-resident from a FATF grey-listed country is buying off-plan property via an agent, paying cash.",q:"Which risk factors contribute to a HIGH risk score here?",o:["Only geographical risk","Geographical risk (grey-listed), channel risk (agent/third party), and transaction risk (cash) — all contribute","Only transaction risk from cash","Only product risk from off-plan"],c:1,ex:"Multiple factors: Geographical (5+), Channel/agent (4), Transaction/cash (4), Product/off-plan (4). Almost certainly High Risk (>8.99)."},
+{id:11,cat:"Risk Assessment",sc:"A Customer Risk Assessment cumulative score is 6.45.",q:"What risk classification and measures apply?",o:["Low Risk — Simplified DD, KYC every 3 years","Medium Risk — Standard DD, KYC annually, monitor for unusual patterns","High Risk — Enhanced DD, KYC every 6-12 months","Medium Risk — No additional measures beyond initial CDD"],c:1,ex:"6.45 = Medium Risk (3.99–8.99). Standard DD, annual KYC updates, monitor for unusual patterns."},
+{id:12,cat:"FIU Reporting",sc:"A DPMS client's customer paid AED 60,000 cash for a gold necklace. Nothing suspicious.",q:"Does this need reporting? Which report?",o:["No report — not suspicious","STR because amount exceeds AED 55,000","DPMSR because it's a cash transaction ≥ AED 55,000 by a DPMS dealer","REAR because amount exceeds AED 55,000"],c:2,ex:"DPMSR must be filed for any cash transaction ≥ AED 55,000 by DPMS dealers, regardless of suspicion. REAR is for real estate."},
+{id:13,cat:"FIU Reporting",sc:"Idenfo returns a partial name match against sanctions. After review, it's a false positive.",q:"What report must still be filed?",o:["No report — it's a false positive","STR (Suspicious Transaction Report)","PNMR (Partial Name Match Report)","FFR (Funds Freeze Report)"],c:2,ex:"PNMR must be filed even for false positives. It documents the match was reviewed and assessed."},
+{id:14,cat:"Communication Protocol",sc:"A client asks on WhatsApp to send their screening report and goAML credentials via WhatsApp.",q:"How should you respond?",o:["Send both via WhatsApp","Send screening via WhatsApp, credentials via email","Decline — all sensitive documents must be sent via email for audit trail","Send via WhatsApp and CC email"],c:2,ex:"WhatsApp is for daily coordination only. All formal deliverables, sensitive reports, and credentials must go via email for compliance audit trail."},
+{id:15,cat:"Screening",sc:"A client urgently needs to onboard a customer. Screening returned 47 hits requiring review.",q:"What is the correct TAT and should the client onboard?",o:["1 day — overdue, client can onboard while waiting","2-3 business days for multiple hits; client must NOT onboard until clear screening report","1 week; suggest provisional onboarding","1 day regardless; deliver what's available"],c:1,ex:"Multiple hits take 2-3 business days. Client must NOT onboard until clear screening report — non-negotiable."},
+{id:16,cat:"FATF",sc:"During EWRA review, a client has customers from Kuwait. FATF list was updated Feb 2026.",q:"What is Kuwait's significance on the latest FATF list?",o:["Removed from monitoring — no action","Added to High Risk — offboard Kuwaiti customers","Newly added to Increased Monitoring — update EWRA and geographical risk scoring","Always been on the list — no change"],c:2,ex:"Kuwait and Papua New Guinea were newly added to FATF Increased Monitoring in Feb 2026. EWRA must be updated."},
+{id:17,cat:"Annual Requirements",sc:"A client set up AML 10 months ago. They expanded to a new emirate, launched online sales, hired 8 staff — updated nothing.",q:"Which compliance actions are required?",o:["Only AML Policy update at annual review","EWRA updated immediately (material changes), AML training for 8 new employees, and all three documents reviewed","Only new employee training","No action until 12-month anniversary"],c:1,ex:"EWRA must update immediately for material changes. Training required for new staff before AML work. Policy should also be reviewed."},
+{id:18,cat:"Inspection Readiness",sc:"Ministry of Economy inspection scheduled next week. Client asks what inspectors review.",q:"What will inspectors typically review?",o:["Only AML Policy and goAML certificate","AML Policy, EWRA, screening records, KYC files, training records, goAML portal activity, and all registers","Only financial statements","Only goAML portal and screening software"],c:1,ex:"Full framework: AML Policy, EWRA, screening records, KYC files, training records/certificates, goAML submissions, EOCN, and all registers."},
+{id:19,cat:"CRA Report",sc:"Compiling monthly CRA report. Colleague asks what goes into each customer entry.",q:"What is the complete information required in a CRA report entry?",o:["Name, passport number, and risk rating only","Customer ID, scores for all 6 risk categories, cumulative rating, screening results, transaction details, DD measures applied, and recommended actions with next review date","Name, screening result, and risk rating","Customer ID, transaction value, and payment method"],c:1,ex:"7 sections: Customer ID, Risk Scores (all 6), Cumulative Rating, Screening Results, Transaction Details, DD Measures, Recommended Actions & Next Review."},
+{id:20,cat:"Service Packages",sc:"Mid-sized real estate agency, 3 branches, ~350 customers/year, needs dedicated consultant.",q:"Which package would you recommend?",o:["Starter (AED 12K/yr) — up to 100 customers","Growth (AED 20K/yr) — up to 500 customers, 30-min monthly consultant","Scale (AED 32K/yr) — up to 1,000 customers, quarterly reviews","Enterprise (AED 45K+/yr) — unlimited"],c:1,ex:"Growth Package: covers 500/yr (350 fits), includes monthly consultant, AED 20K/year. Starter too small, Scale/Enterprise over-provisioned."}
+];
+
+const GUIDELINES=[
+{icon:"🚫",title:"No Tab Switching",desc:"Switching to another tab, window, or application will immediately terminate your assessment and record it as a violation."},
+{icon:"🔍",title:"No External Resources",desc:"Do not search the internet, open documents, or use any reference materials. This is a closed-book test."},
+{icon:"⏱️",title:"Complete in One Sitting",desc:"Once started, complete all 20 questions without interruption. You cannot pause and resume."},
+{icon:"📱",title:"Close Other Applications",desc:"Before starting, close all other browser tabs and applications to avoid accidental tab switches."},
+{icon:"✅",title:"90% Pass Score Required",desc:"You must score 18 out of 20 (90%) to pass. You may retake if you fail."},
+{icon:"📝",title:"One Question at a Time",desc:"Confirm each answer before proceeding. You cannot return to previous questions."}
+];
+
+// Simple state management
+let state={view:"landing",allResults:[],name:"",email:"",currentQ:0,selected:null,confirmed:false,answers:[],myResult:null,pinInput:"",pinError:false,guidelinesAccepted:false,terminated:false,quizActive:false};
+
+function loadResults(){try{const d=localStorage.getItem(STORAGE_KEY);if(d)state.allResults=JSON.parse(d);}catch(e){}}
+function saveResults(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.allResults));}catch(e){}}
+
+function saveResult(r){state.allResults.push(r);saveResults();}
+
+loadResults();
+
+// Tab switch detection
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden&&state.quizActive){
+    state.quizActive=false;state.terminated=true;
+    const c=state.answers.filter(a=>a.isCorrect).length;
+    const sc=state.answers.length>0?Math.round((c/Q.length)*100):0;
+    const res={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:state.name,email:state.email,score:sc,correct:c,total:Q.length,passed:false,date:new Date().toISOString(),answers:[...state.answers],terminated:true,terminatedAt:state.currentQ+1,reason:"Tab switch detected"};
+    state.myResult=res;saveResult(res);state.view="terminated";render();
+  }
+});
+
+function h(tag,props,...children){
+  const el=document.createElement(tag);
+  if(props)Object.entries(props).forEach(([k,v])=>{
+    if(k==="style"&&typeof v==="object"){Object.assign(el.style,v);}
+    else if(k.startsWith("on")){el.addEventListener(k.slice(2).toLowerCase(),v);}
+    else if(k==="className"){el.className=v;}
+    else if(k==="htmlFor"){el.setAttribute("for",v);}
+    else el.setAttribute(k,v);
+  });
+  children.flat(Infinity).forEach(c=>{
+    if(c==null||c===false)return;
+    el.appendChild(typeof c==="string"||typeof c==="number"?document.createTextNode(c):c);
+  });
+  return el;
+}
+
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+  app.appendChild(buildView());
+}
+
+function buildView(){
+  const S=state;
+  if(S.view==="landing")return landingView();
+  if(S.view==="guidelines")return guidelinesView();
+  if(S.view==="pin")return pinView();
+  if(S.view==="admin")return adminView();
+  if(S.view==="quiz")return quizView();
+  if(S.view==="terminated")return terminatedView();
+  if(S.view==="result")return resultView();
+  return h("div",null);
+}
+
+function landingView(){
+  return h("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#0F1B33,#1B2A4A,#0F1B33)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}},
+    h("div",{style:{maxWidth:"500px",width:"100%"}},
+      h("div",{style:{textAlign:"center",marginBottom:"24px"}},
+        h("div",{style:{width:"64px",height:"64px",background:"#E8652B",borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:"28px",marginBottom:"14px"}},"🛡️"),
+        h("h1",{style:{color:"#fff",fontSize:"22px",fontWeight:"700",margin:"0 0 2px"}},"DNFBP AML Compliance"),
+        h("h2",{style:{color:"#E8652B",fontSize:"16px",fontWeight:"600",margin:"0 0 4px"}},"Team Assessment"),
+        h("p",{style:{color:"#8A95A9",fontSize:"11px"}},"Finanshels — Internal Compliance Training")
+      ),
+      h("div",{style:{background:"rgba(255,255,255,0.05)",borderRadius:"12px",padding:"18px 20px",border:"1px solid rgba(255,255,255,0.07)",marginBottom:"16px"}},
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px"}},
+          ...[{l:"Questions",v:"20"},{l:"Pass Score",v:"90%"},{l:"Format",v:"Scenario MCQ"},{l:"Proctored",v:"Yes"}].map(i=>
+            h("div",{style:{background:"rgba(255,255,255,0.04)",borderRadius:"7px",padding:"8px 11px",borderLeft:"3px solid #E8652B"}},
+              h("div",{style:{color:"#8A95A9",fontSize:"9px",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.6px"}},i.l),
+              h("div",{style:{color:"#fff",fontSize:"15px",fontWeight:"700",marginTop:"1px"}},i.v)
+            )
+          )
+        ),
+        h("div",{style:{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px"}},
+          h("p",{style:{color:"#FCA5A5",fontSize:"11px",lineHeight:"1.5",fontWeight:"500"}},"⚠️ This assessment is proctored. Switching tabs or windows will immediately terminate your attempt.")
+        ),
+        h("p",{style:{color:"#8A95A9",fontSize:"11px",lineHeight:"1.5"}},"Covers UAE AML regulations, penalties, onboarding, KYC/CDD/EDD, risk scoring, FIU reporting, FATF lists, communication protocols, inspections, and service packages.")
+      ),
+      h("input",{type:"text",placeholder:"Full Name *",value:state.name,style:{width:"100%",padding:"10px 14px",borderRadius:"7px",border:"2px solid rgba(232,101,43,0.2)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:"13px",fontFamily:"Poppins,sans-serif",outline:"none",marginBottom:"8px",boxSizing:"border-box"},oninput:function(e){state.name=e.target.value;},onfocus:function(e){e.target.style.borderColor="#E8652B";},onblur:function(e){e.target.style.borderColor="rgba(232,101,43,0.2)";}}),
+      h("input",{type:"email",placeholder:"Email Address *",value:state.email,style:{width:"100%",padding:"10px 14px",borderRadius:"7px",border:"2px solid rgba(232,101,43,0.2)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:"13px",fontFamily:"Poppins,sans-serif",outline:"none",marginBottom:"12px",boxSizing:"border-box"},oninput:function(e){state.email=e.target.value;},onfocus:function(e){e.target.style.borderColor="#E8652B";},onblur:function(e){e.target.style.borderColor="rgba(232,101,43,0.2)";}}),
+      h("button",{style:{width:"100%",padding:"11px",borderRadius:"7px",border:"none",background:"#E8652B",color:"#fff",fontSize:"13px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif",marginBottom:"10px"},onclick:function(){if(state.name.trim()&&state.email.trim()){state.view="guidelines";render();}}},"Continue to Guidelines"),
+      h("button",{style:{width:"100%",padding:"10px",borderRadius:"7px",border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#8A95A9",fontSize:"11px",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="pin";render();}},"🔒 Admin Dashboard")
+    )
+  );
+}
+
+function guidelinesView(){
+  return h("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#0F1B33,#1B2A4A,#0F1B33)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}},
+    h("div",{style:{maxWidth:"560px",width:"100%"}},
+      h("div",{style:{textAlign:"center",marginBottom:"24px"}},
+        h("div",{style:{fontSize:"36px",marginBottom:"10px"}},"📋"),
+        h("h2",{style:{color:"#fff",fontSize:"22px",fontWeight:"700",margin:"0 0 4px"}},"Assessment Guidelines"),
+        h("p",{style:{color:"#8A95A9",fontSize:"12px"}},"Read carefully before starting")
+      ),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:"8px",marginBottom:"20px"}},
+        ...GUIDELINES.map(g=>
+          h("div",{style:{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"14px 16px",border:"1px solid rgba(255,255,255,0.07)",display:"flex",gap:"12px",alignItems:"flex-start"}},
+            h("div",{style:{fontSize:"22px",minWidth:"32px",textAlign:"center",marginTop:"2px"}},g.icon),
+            h("div",null,
+              h("div",{style:{color:"#fff",fontSize:"13px",fontWeight:"600",marginBottom:"3px"}},g.title),
+              h("div",{style:{color:"#8A95A9",fontSize:"11px",lineHeight:"1.5"}},g.desc)
+            )
+          )
+        )
+      ),
+      h("label",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"18px",cursor:"pointer",padding:"12px 14px",background:state.guidelinesAccepted?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.03)",borderRadius:"8px",border:state.guidelinesAccepted?"1px solid rgba(16,185,129,0.3)":"1px solid rgba(255,255,255,0.07)"}},
+        h("input",{type:"checkbox",checked:state.guidelinesAccepted?"checked":undefined,onchange:function(e){state.guidelinesAccepted=e.target.checked;render();}}),
+        h("span",{style:{color:state.guidelinesAccepted?"#10B981":"#8A95A9",fontSize:"12px",fontWeight:"600"}},"I have read and agree to all guidelines. I understand switching tabs will terminate my assessment.")
+      ),
+      h("div",{style:{display:"flex",gap:"10px"}},
+        h("button",{style:{flex:"1",padding:"11px",borderRadius:"7px",border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#8A95A9",fontSize:"12px",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";render();}},"← Back"),
+        h("button",{style:{flex:"2",padding:"11px",borderRadius:"7px",border:"none",background:state.guidelinesAccepted?"#10B981":"#444",color:"#fff",fontSize:"13px",fontWeight:"600",cursor:state.guidelinesAccepted?"pointer":"not-allowed",fontFamily:"Poppins,sans-serif",opacity:state.guidelinesAccepted?"1":"0.5"},onclick:function(){if(!state.guidelinesAccepted)return;state.currentQ=0;state.selected=null;state.confirmed=false;state.answers=[];state.myResult=null;state.terminated=false;state.quizActive=true;state.view="quiz";render();}},"Start Assessment")
+      )
+    )
+  );
+}
+
+function pinView(){
+  return h("div",{style:{minHeight:"100vh",background:"#0F1B33",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}},
+    h("div",{style:{maxWidth:"340px",width:"100%",textAlign:"center"}},
+      h("div",{style:{fontSize:"32px",marginBottom:"14px"}},"🔒"),
+      h("h2",{style:{color:"#fff",fontSize:"17px",fontWeight:"700",margin:"0 0 6px"}},"Admin Access"),
+      h("p",{style:{color:"#8A95A9",fontSize:"11px",margin:"0 0 18px"}},"Enter master PIN"),
+      h("input",{type:"password",placeholder:"PIN",style:{width:"100%",padding:"11px 14px",borderRadius:"7px",border:"2px solid "+(state.pinError?"#EF4444":"rgba(232,101,43,0.3)"),background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:"20px",fontFamily:"Poppins,sans-serif",outline:"none",textAlign:"center",letterSpacing:"8px",boxSizing:"border-box",marginBottom:"6px"},oninput:function(e){state.pinInput=e.target.value;state.pinError=false;},onkeydown:function(e){if(e.key==="Enter"){if(state.pinInput===ADMIN_PIN){state.view="admin";state.pinInput="";}else state.pinError=true;render();}}}),
+      state.pinError?h("p",{style:{color:"#EF4444",fontSize:"10px",margin:"2px 0 6px"}},"Incorrect PIN"):null,
+      h("div",{style:{display:"flex",gap:"8px",marginTop:"12px"}},
+        h("button",{style:{flex:"1",padding:"10px",borderRadius:"7px",border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#8A95A9",fontSize:"11px",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";state.pinInput="";state.pinError=false;render();}},"Back"),
+        h("button",{style:{flex:"1",padding:"10px",borderRadius:"7px",border:"none",background:"#E8652B",color:"#fff",fontSize:"11px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){if(state.pinInput===ADMIN_PIN){state.view="admin";state.pinInput="";}else state.pinError=true;render();}},"Unlock")
+      )
+    )
+  );
+}
+
+function adminView(){
+  const res=state.allResults;const sorted=[...res].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=res.length,passed=res.filter(r=>r.passed).length,termed=res.filter(r=>r.terminated).length,failed=total-passed-termed;
+  const avg=total>0?Math.round(res.reduce((s,r)=>s+r.score,0)/total):0;
+  const stats=[{l:"Total",v:total,c:"#E8652B"},{l:"Passed",v:passed,c:"#10B981"},{l:"Failed",v:failed,c:"#F59E0B"},{l:"Terminated",v:termed,c:"#EF4444"},{l:"Avg Score",v:avg+"%",c:"#6366F1"}];
+
+  let tableRows=sorted.map((r,i)=>{
+    const bg=r.terminated?"#FEF2F2":"transparent";
+    const statusBg=r.terminated?"#FEF2F2":r.passed?"#ECFDF5":"#FEF7CD";
+    const statusColor=r.terminated?"#DC2626":r.passed?"#059669":"#A16207";
+    const statusText=r.terminated?"⛔ TERMINATED":r.passed?"PASSED":"FAILED";
+    const scoreColor=r.passed?"#059669":r.terminated?"#DC2626":"#F59E0B";
+    const correctText=r.correct+"/"+r.total+(r.terminated?" (Q"+r.terminatedAt+")":"");
+    const dateText=new Date(r.date).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+    return h("tr",{style:{borderBottom:"1px solid #F3F4F6",background:bg}},
+      h("td",{style:{padding:"9px 12px",color:"#8A95A9"}},String(res.length-i)),
+      h("td",{style:{padding:"9px 12px",fontWeight:"600",color:"#1E293B"}},r.name),
+      h("td",{style:{padding:"9px 12px",color:"#6B7280"}},r.email),
+      h("td",{style:{padding:"9px 12px"}},h("span",{style:{fontWeight:"700",fontSize:"13px",color:scoreColor}},r.score+"%")),
+      h("td",{style:{padding:"9px 12px"}},h("span",{style:{padding:"2px 10px",borderRadius:"4px",fontSize:"9px",fontWeight:"700",background:statusBg,color:statusColor}},statusText)),
+      h("td",{style:{padding:"9px 12px",color:"#6B7280"}},correctText),
+      h("td",{style:{padding:"9px 12px",color:"#8A95A9",fontSize:"10px"}},dateText)
+    );
+  });
+
+  return h("div",{style:{minHeight:"100vh",background:"#F5F6FA"}},
+    h("div",{style:{background:"#0F1B33",padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:"0",zIndex:"10"}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},h("span",{style:{fontSize:"16px"}},"🛡️"),h("span",{style:{color:"#fff",fontWeight:"700",fontSize:"13px"}},"Admin Dashboard")),
+      h("button",{style:{padding:"5px 14px",borderRadius:"6px",border:"1px solid rgba(255,255,255,0.12)",background:"transparent",color:"#8A95A9",fontSize:"10px",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";render();}},"← Back")
+    ),
+    h("div",{style:{maxWidth:"940px",margin:"0 auto",padding:"22px 14px"}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"10px",marginBottom:"22px"}},
+        ...stats.map(s=>h("div",{style:{background:"#fff",borderRadius:"10px",padding:"14px 12px",boxShadow:"0 1px 4px rgba(0,0,0,0.04)",borderTop:"3px solid "+s.c}},
+          h("div",{style:{color:"#8A95A9",fontSize:"9px",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.4px"}},s.l),
+          h("div",{style:{fontSize:"26px",fontWeight:"800",color:s.c,marginTop:"3px"}},String(s.v))
+        ))
+      ),
+      h("div",{style:{background:"#fff",borderRadius:"10px",overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}},
+        h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #E8ECF2",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("h3",{style:{fontSize:"14px",fontWeight:"700",color:"#0F1B33"}},"All Submissions ("+total+")"),
+          h("div",{style:{display:"flex",gap:"5px"}},
+            h("span",{style:{background:"#ECFDF5",color:"#059669",padding:"2px 8px",borderRadius:"4px",fontSize:"9px",fontWeight:"600"}},"✓ "+passed),
+            h("span",{style:{background:"#FEF7CD",color:"#A16207",padding:"2px 8px",borderRadius:"4px",fontSize:"9px",fontWeight:"600"}},"✗ "+failed),
+            h("span",{style:{background:"#FEF2F2",color:"#DC2626",padding:"2px 8px",borderRadius:"4px",fontSize:"9px",fontWeight:"600"}},"⛔ "+termed)
+          )
+        ),
+        sorted.length===0?h("div",{style:{padding:"36px 16px",textAlign:"center",color:"#8A95A9",fontSize:"12px"}},"No submissions yet. Share the link with your team."):
+        h("div",{style:{overflowX:"auto"}},
+          h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:"11px"}},
+            h("thead",null,h("tr",{style:{background:"#F9FAFB"}},
+              ...["#","Name","Email","Score","Status","Correct","Date"].map(hd=>h("th",{style:{padding:"9px 12px",textAlign:"left",fontWeight:"600",color:"#6B7280",fontSize:"9px",textTransform:"uppercase",letterSpacing:"0.3px",borderBottom:"1px solid #E8ECF2"}},hd))
+            )),
+            h("tbody",null,...tableRows)
+          )
+        )
+      )
+    )
+  );
+}
+
+function quizView(){
+  const qi=state.currentQ,question=Q[qi],prog=((qi+(state.confirmed?1:0))/Q.length)*100;
+
+  const options=question.o.map((opt,i)=>{
+    const isSel=state.selected===i,isCorr=i===question.c;
+    let bg="#fff",bd="2px solid #E8ECF2",lBg="#F5F6FA",lC="#1E293B";
+    if(state.confirmed){if(isCorr){bg="#ECFDF5";bd="2px solid #10B981";lBg="#10B981";lC="#fff";}else if(isSel){bg="#FEF2F2";bd="2px solid #EF4444";lBg="#EF4444";lC="#fff";}else bg="#F9FAFB";}
+    else if(isSel){bg="#FFF7F2";bd="2px solid #E8652B";lBg="#E8652B";lC="#fff";}
+    const letter=String.fromCharCode(65+i);
+    const label=state.confirmed?(isCorr?"✓":isSel?"✗":letter):letter;
+
+    return h("div",{style:{display:"flex",alignItems:"flex-start",gap:"10px",padding:"10px 13px",borderRadius:"8px",background:bg,border:bd,cursor:state.confirmed?"default":"pointer",transition:"all 0.15s",marginBottom:"6px"},onclick:function(){if(!state.confirmed){state.selected=i;render();}}},
+      h("div",{style:{minWidth:"22px",height:"22px",borderRadius:"5px",background:lBg,color:lC,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"10px",fontWeight:"700",marginTop:"1px"}},label),
+      h("span",{style:{color:"#1E293B",fontSize:"12px",lineHeight:"1.5",paddingTop:"1px"}},opt)
+    );
+  });
+
+  let explanation=null;
+  if(state.confirmed){
+    const correct=state.selected===question.c;
+    explanation=h("div",{style:{background:correct?"#ECFDF5":"#FFF7ED",borderRadius:"8px",padding:"11px 14px",marginBottom:"16px",border:"1px solid "+(correct?"#A7F3D0":"#FED7AA")}},
+      h("div",{style:{fontSize:"9px",fontWeight:"700",color:correct?"#059669":"#EA580C",marginBottom:"3px",textTransform:"uppercase",letterSpacing:"0.3px"}},correct?"✓ Correct":"✗ Incorrect"),
+      h("p",{style:{color:"#1E293B",fontSize:"11px",lineHeight:"1.6"}},question.ex)
+    );
+  }
+
+  const actionBtn=!state.confirmed?
+    h("button",{style:{padding:"10px 26px",borderRadius:"7px",border:"none",background:state.selected!==null?"#E8652B":"#D1D5DB",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:state.selected!==null?"pointer":"not-allowed",fontFamily:"Poppins,sans-serif"},onclick:function(){if(state.selected!==null){state.confirmed=true;render();}}},"Confirm Answer"):
+    h("button",{style:{padding:"10px 26px",borderRadius:"7px",border:"none",background:"#0F1B33",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){
+      const q=Q[state.currentQ];
+      state.answers.push({questionId:q.id,selected:state.selected,isCorrect:state.selected===q.c,category:q.cat});
+      state.selected=null;state.confirmed=false;
+      if(state.currentQ<Q.length-1){state.currentQ++;render();}
+      else{
+        state.quizActive=false;const c=state.answers.filter(a=>a.isCorrect).length;const sc=Math.round((c/Q.length)*100);
+        const res={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:state.name,email:state.email,score:sc,correct:c,total:Q.length,passed:sc>=PASS_THRESHOLD,date:new Date().toISOString(),answers:[...state.answers],terminated:false};
+        state.myResult=res;saveResult(res);state.view="result";render();
+      }
+    }},qi<Q.length-1?"Next Question →":"View Results");
+
+  return h("div",{style:{minHeight:"100vh",background:"#F5F6FA"}},
+    h("div",{style:{background:"#0F1B33",padding:"10px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:"0",zIndex:"10"}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},
+        h("span",{style:{fontSize:"15px"}},"🛡️"),
+        h("span",{style:{color:"#fff",fontWeight:"600",fontSize:"12px"}},"AML Assessment"),
+        h("span",{style:{background:"rgba(239,68,68,0.15)",color:"#FCA5A5",fontSize:"8px",fontWeight:"600",padding:"2px 8px",borderRadius:"10px",marginLeft:"6px"}},"🔴 PROCTORED")
+      ),
+      h("div",{style:{display:"flex",alignItems:"center",gap:"10px"}},
+        h("span",{style:{color:"#8A95A9",fontSize:"10px"}},state.name),
+        h("span",{style:{color:"#E8652B",fontWeight:"700",fontSize:"12px"}},"Q"+(qi+1)+"/"+Q.length)
+      )
+    ),
+    h("div",{style:{height:"3px",background:"#E8ECF2"}},h("div",{style:{height:"100%",width:prog+"%",background:"linear-gradient(90deg,#E8652B,#F28C5A)",transition:"width 0.4s",borderRadius:"0 2px 2px 0"}})),
+    h("div",{style:{maxWidth:"720px",margin:"0 auto",padding:"22px 14px"}},
+      h("div",{style:{display:"inline-block",background:"#0F1B33",color:"#E8652B",fontSize:"9px",fontWeight:"600",padding:"3px 9px",borderRadius:"12px",letterSpacing:"0.3px",marginBottom:"10px",textTransform:"uppercase"}},question.cat),
+      h("div",{style:{background:"#fff",borderRadius:"9px",padding:"14px 18px",marginBottom:"14px",borderLeft:"4px solid #E8652B",boxShadow:"0 1px 6px rgba(0,0,0,0.03)"}},
+        h("div",{style:{color:"#8A95A9",fontSize:"8px",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.7px",marginBottom:"4px"}},"SCENARIO"),
+        h("p",{style:{color:"#1E293B",fontSize:"12px",lineHeight:"1.6"}},question.sc)
+      ),
+      h("h3",{style:{color:"#0F1B33",fontSize:"13.5px",fontWeight:"700",margin:"0 0 12px",lineHeight:"1.45"}},question.q),
+      ...options,
+      explanation,
+      h("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:"8px"}},actionBtn)
+    )
+  );
+}
+
+function terminatedView(){
+  const r=state.myResult;
+  return h("div",{style:{minHeight:"100vh",background:"linear-gradient(135deg,#1C1917,#292524)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}},
+    h("div",{style:{maxWidth:"480px",width:"100%",textAlign:"center"}},
+      h("div",{style:{width:"80px",height:"80px",borderRadius:"50%",background:"#EF4444",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:"36px",marginBottom:"18px"}},"⛔"),
+      h("h1",{style:{color:"#fff",fontSize:"24px",fontWeight:"700",margin:"0 0 6px"}},"Assessment Terminated"),
+      h("p",{style:{color:"#FCA5A5",fontSize:"14px",fontWeight:"600",margin:"0 0 8px"}},"Tab Switch / Window Change Detected"),
+      h("p",{style:{color:"#8A95A9",fontSize:"12px",margin:"0 0 24px",lineHeight:"1.6"}},"Your assessment was terminated because you switched away from this tab. This has been recorded. You answered "+(r?r.answers.length:0)+" of 20 questions."),
+      h("div",{style:{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:"10px",padding:"16px 20px",marginBottom:"24px",display:"inline-flex",gap:"24px"}},
+        h("div",null,h("div",{style:{color:"#EF4444",fontSize:"28px",fontWeight:"800"}},(r?r.score:0)+"%"),h("div",{style:{color:"#8A95A9",fontSize:"10px"}},"Score at exit")),
+        h("div",{style:{width:"1px",background:"rgba(255,255,255,0.1)"}}),
+        h("div",null,h("div",{style:{color:"#fff",fontSize:"28px",fontWeight:"800"}},"Q"+(r?r.terminatedAt:0)),h("div",{style:{color:"#8A95A9",fontSize:"10px"}},"Terminated at"))
+      ),
+      h("p",{style:{color:"#6B7280",fontSize:"11px",marginBottom:"20px",lineHeight:"1.5"}},"This attempt is logged. You may retake after closing all other tabs."),
+      h("button",{style:{padding:"12px 36px",borderRadius:"8px",border:"none",background:"#E8652B",color:"#fff",fontSize:"13px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";state.name="";state.email="";state.currentQ=0;state.selected=null;state.confirmed=false;state.answers=[];state.myResult=null;state.guidelinesAccepted=false;state.terminated=false;state.quizActive=false;render();}},"Return to Home")
+    )
+  );
+}
+
+function resultView(){
+  const r=state.myResult;if(!r)return h("div");
+  // Category performance
+  const cats={};r.answers.forEach(a=>{if(!cats[a.category])cats[a.category]={t:0,c:0};cats[a.category].t++;if(a.isCorrect)cats[a.category].c++;});
+  const catPerf=Object.entries(cats).map(([k,d])=>({cat:k,c:d.c,t:d.t,pct:Math.round((d.c/d.t)*100)}));
+
+  return h("div",{style:{minHeight:"100vh",background:"#F5F6FA"}},
+    h("div",{style:{background:r.passed?"linear-gradient(135deg,#0F1B33,#1B2A4A)":"linear-gradient(135deg,#1C1917,#292524)",padding:"32px 18px",textAlign:"center"}},
+      h("div",{style:{width:"68px",height:"68px",borderRadius:"50%",background:r.passed?"#10B981":"#EF4444",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:"30px",marginBottom:"12px"}},r.passed?"✓":"✗"),
+      h("h1",{style:{color:"#fff",fontSize:"24px",fontWeight:"700",margin:"0 0 3px"}},r.passed?"Assessment Passed!":"Assessment Not Passed"),
+      h("p",{style:{color:"#8A95A9",fontSize:"11px",margin:"0 0 18px"}},r.name+" — "+r.email),
+      h("div",{style:{display:"inline-flex",gap:"20px",background:"rgba(255,255,255,0.06)",borderRadius:"10px",padding:"14px 28px",border:"1px solid rgba(255,255,255,0.07)"}},
+        h("div",null,h("div",{style:{color:r.passed?"#10B981":"#EF4444",fontSize:"30px",fontWeight:"800"}},r.score+"%"),h("div",{style:{color:"#8A95A9",fontSize:"9px"}},"Score")),
+        h("div",{style:{width:"1px",background:"rgba(255,255,255,0.1)"}}),
+        h("div",null,h("div",{style:{color:"#E8652B",fontSize:"30px",fontWeight:"800"}},"90%"),h("div",{style:{color:"#8A95A9",fontSize:"9px"}},"Required")),
+        h("div",{style:{width:"1px",background:"rgba(255,255,255,0.1)"}}),
+        h("div",null,h("div",{style:{color:"#fff",fontSize:"30px",fontWeight:"800"}},r.correct+"/"+r.total),h("div",{style:{color:"#8A95A9",fontSize:"9px"}},"Correct"))
+      )
+    ),
+    h("div",{style:{maxWidth:"720px",margin:"0 auto",padding:"22px 14px"}},
+      h("h3",{style:{color:"#0F1B33",fontSize:"14px",fontWeight:"700",margin:"0 0 10px"}},"Category Performance"),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:"4px",marginBottom:"24px"}},
+        ...catPerf.map(c=>h("div",{style:{display:"flex",alignItems:"center",gap:"9px",background:"#fff",borderRadius:"6px",padding:"8px 12px",boxShadow:"0 1px 2px rgba(0,0,0,0.02)"}},
+          h("div",{style:{minWidth:"110px",fontSize:"10px",fontWeight:"600",color:"#1E293B"}},c.cat),
+          h("div",{style:{flex:"1",height:"5px",background:"#E8ECF2",borderRadius:"3px",overflow:"hidden"}},h("div",{style:{height:"100%",width:c.pct+"%",background:c.pct===100?"#10B981":c.pct>=50?"#F59E0B":"#EF4444",borderRadius:"3px"}})),
+          h("div",{style:{minWidth:"36px",textAlign:"right",fontSize:"10px",fontWeight:"700",color:c.pct===100?"#10B981":c.pct>=50?"#F59E0B":"#EF4444"}},c.c+"/"+c.t)
+        ))
+      ),
+      h("h3",{style:{color:"#0F1B33",fontSize:"14px",fontWeight:"700",margin:"0 0 10px"}},"Question Review"),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:"6px"}},
+        ...Q.map((qst,i)=>{
+          const a=r.answers[i];if(!a)return null;
+          return h("div",{style:{background:"#fff",borderRadius:"8px",padding:"10px 14px",borderLeft:"3px solid "+(a.isCorrect?"#10B981":"#EF4444"),boxShadow:"0 1px 2px rgba(0,0,0,0.02)"}},
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"3px"}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:"5px"}},
+                h("span",{style:{background:a.isCorrect?"#ECFDF5":"#FEF2F2",color:a.isCorrect?"#059669":"#DC2626",fontSize:"8px",fontWeight:"700",padding:"2px 6px",borderRadius:"3px"}},a.isCorrect?"CORRECT":"INCORRECT"),
+                h("span",{style:{color:"#8A95A9",fontSize:"8px"}},"Q"+(i+1)+" — "+qst.cat)
+              )
+            ),
+            h("p",{style:{color:"#1E293B",fontSize:"11px",fontWeight:"600",margin:"0 0 2px",lineHeight:"1.3"}},qst.q),
+            !a.isCorrect?h("div",{style:{fontSize:"10px",color:"#6B7280",lineHeight:"1.4"}},
+              h("span",{style:{color:"#DC2626"}},"Your answer: "),qst.o[a.selected],h("br"),
+              h("span",{style:{color:"#059669"}},"Correct: "),qst.o[qst.c]
+            ):null
+          );
+        }).filter(Boolean)
+      ),
+      h("div",{style:{display:"flex",justifyContent:"center",gap:"10px",marginTop:"24px",paddingBottom:"28px"}},
+        !r.passed?h("button",{style:{padding:"10px 26px",borderRadius:"7px",border:"none",background:"#E8652B",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";state.name="";state.email="";state.currentQ=0;state.selected=null;state.confirmed=false;state.answers=[];state.myResult=null;state.guidelinesAccepted=false;state.terminated=false;render();}},"Retake Assessment"):null,
+        h("button",{style:{padding:"10px 26px",borderRadius:"7px",border:"2px solid #8A95A9",background:"transparent",color:"#8A95A9",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"Poppins,sans-serif"},onclick:function(){state.view="landing";state.name="";state.email="";state.currentQ=0;state.selected=null;state.confirmed=false;state.answers=[];state.myResult=null;state.guidelinesAccepted=false;state.terminated=false;render();}},"Back to Home")
+      )
+    )
+  );
+}
+
+render();
+</script>
+</body>
+</html>
